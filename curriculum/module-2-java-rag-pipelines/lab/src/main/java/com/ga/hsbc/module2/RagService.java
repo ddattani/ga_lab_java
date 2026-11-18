@@ -34,6 +34,14 @@ public final class RagService {
      * sources and the token counts.
      */
     public RagAnswer ask(String question) throws IOException {
-        throw new UnsupportedOperationException("TODO: write RagService.ask");
+        List<InMemoryIndex.ScoredChunk> sources = index.search(question, topK);
+        if (sources.isEmpty() || sources.get(0).score() < minScore) {
+            return new RagAnswer(question, NO_ANSWER, false, List.of(), 0, 0);
+        }
+
+        PromptBuilder.Prompt prompt = PromptBuilder.build(question, sources);
+        LlmClient.LlmResponse response = llm.complete(prompt.system(), prompt.user());
+        return new RagAnswer(question, response.text(), true, sources,
+                response.inputTokens(), response.outputTokens());
     }
 }

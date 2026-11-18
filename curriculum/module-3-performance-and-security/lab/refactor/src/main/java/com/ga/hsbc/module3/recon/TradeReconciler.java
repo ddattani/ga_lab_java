@@ -2,6 +2,7 @@ package com.ga.hsbc.module3.recon;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,16 +14,26 @@ public class TradeReconciler implements Reconciler {
 
     @Override
     public List<String> findDuplicateTradeIds(List<Trade> trades) {
-        List<String> duplicates = new ArrayList<>();
-        for (int i = 0; i < trades.size(); i++) {
-            for (int j = i + 1; j < trades.size(); j++) {
-                if (trades.get(i).tradeId().equals(trades.get(j).tradeId())) {
-                    if (!duplicates.contains(trades.get(i).tradeId())) {
-                        duplicates.add(trades.get(i).tradeId());
-                    }
-                }
-            }
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        int size = trades.size();
+        if (size < 2) {
+            return new ArrayList<>();
         }
+
+        for (int i = 0; i < size; i++) {
+            String tradeId = trades.get(i).tradeId();
+            if (tradeId == null && i < size - 1) {
+                throw new NullPointerException();
+            }
+            counts.merge(tradeId, 1, Integer::sum);
+        }
+
+        List<String> duplicates = new ArrayList<>();
+        counts.forEach((tradeId, count) -> {
+            if (count > 1) {
+                duplicates.add(tradeId);
+            }
+        });
         return duplicates;
     }
 
